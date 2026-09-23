@@ -25,6 +25,4 @@ export type GrokProvider = {
   label: string;
 };
 
-export const GROK_PROVIDERS: readonly GrokProvider[] = [
-  { providerId: "grok-google", idp: "google", label: "Google" },
-];
+export const GROK_PROVIDERS: readonly GrokProvider[] = [];

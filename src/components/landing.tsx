@@ -9,7 +9,6 @@ import {
   Sun,
   Timer,
 } from "lucide-react";
-import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { ParticleField } from "@/components/particles";
@@ -44,8 +43,6 @@ export function LandingPage() {
     }, root);
     return () => ctx.revert();
   }, []);
-
-  const google = GROK_PROVIDERS.find((p) => p.idp === "google");
 
   return (
     <div ref={rootRef} className="mesh-bg relative min-h-dvh overflow-hidden">
@@ -98,14 +95,9 @@ export function LandingPage() {
                   <Link to="/app">Enter workspace</Link>
                 </Button>
               ) : (
-                google ? (
-                  <Button
-                    size="lg"
-                    onClick={() => signIn(google.providerId, { callbackURL: "/app" })}
-                  >
-                    Continue with Google
-                  </Button>
-                ) : null
+                <Button asChild size="lg">
+                  <Link to="/login">Sign in</Link>
+                </Button>
               )}
             </div>
           </div>
