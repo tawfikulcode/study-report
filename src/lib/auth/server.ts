@@ -105,8 +105,15 @@ const LOCAL_DEV_ORIGINS: string[] = [
 ];
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
-  // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
+  // (not only the preview wildcard), plus wildcard hosts for Vercel/Netlify deployments.
+  allowedHosts: [
+    ...previewAllowedHosts,
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "*.vercel.app",
+    "*.netlify.app",
+  ],
   // `auto` → trust both http:// and https:// expansions of allowedHosts
   // (preview is https; local dev is http).
   protocol: "auto" as const,
@@ -114,16 +121,27 @@ const baseURL = explicitBaseURL ?? {
 };
 
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
-// Missing entries here surface as FORBIDDEN "Invalid origin".
-const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
-  : [
-      // Host wildcards (matched against Origin's host)
-      ...previewAllowedHosts,
-      // Full-origin wildcards (matched against Origin)
-      ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
-      ...LOCAL_DEV_ORIGINS,
-    ];
+// Dynamically includes request origin & host to prevent "Invalid origin" errors on deploy.
+const trustedOrigins = (request?: Request): string[] => {
+  const reqOrigin = request?.headers.get("origin");
+  const host = request?.headers.get("x-forwarded-host") ?? request?.headers.get("host");
+
+  const list: string[] = [
+    ...LOCAL_DEV_ORIGINS,
+    ...previewAllowedHosts,
+    ...previewAllowedHosts.flatMap((h) => [`https://${h}`, `http://${h}`]),
+    "*.vercel.app",
+    "*.netlify.app",
+  ];
+
+  if (explicitBaseURL) list.push(explicitBaseURL);
+  if (reqOrigin) list.push(reqOrigin);
+  if (host) {
+    list.push(`https://${host}`, `http://${host}`);
+  }
+
+  return list;
+};
 
 const databaseUrl = env("DATABASE_URL");
 
@@ -150,24 +168,16 @@ export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
-const grokOAuthPlugin =
-  authConfigured && GROK_PROVIDERS.length > 0
-    ? genericOAuth({
+const grokOAuthPlugin = authConfigured
+  ? genericOAuth({
       config: GROK_PROVIDERS.map(({ providerId, idp }) => ({
         providerId,
         clientId: grokClientId as string,
         clientSecret: grokClientSecret as string,
-        // Prefer static endpoints over `discoveryUrl` so initiating (and
-        // completing) OAuth does not wait on a broker discovery fetch.
         authorizationUrl: grokAuthorizationUrl,
         tokenUrl: grokTokenUrl,
         userInfoUrl: grokUserInfoUrl,
         scopes: ["openid", "profile", "email"],
-        // `prompt: "login"` forces the broker to re-authenticate against the
-        // upstream on every sign-in instead of silently reusing an existing
-        // broker session. Combined with the broker sending Google
-        // `prompt=select_account`, the user always gets the account chooser
-        // and can pick (or switch) which account to sign in with.
         authorizationUrlParams: { idp, prompt: "login" },
       })),
     })
