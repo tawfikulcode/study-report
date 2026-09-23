@@ -39,7 +39,7 @@ function Login() {
       });
 
       if (signInError) {
-        // 2. If user doesn't exist yet, automatically create account
+        // 2. If sign in fails, attempt sign up (first time account creation)
         const { error: signUpError } = await authClient.signUp.email({
           email: ALLOWED_EMAIL,
           password: ALLOWED_PASS,
@@ -47,13 +47,18 @@ function Login() {
         });
 
         if (signUpError) {
-          // 3. Retry sign in if sign-up returned user already exists error
-          const { error: finalError } = await authClient.signIn.email({
+          // 3. Retry sign in one last time
+          const { error: retryError } = await authClient.signIn.email({
             email: ALLOWED_EMAIL,
             password: ALLOWED_PASS,
           });
-          if (finalError) {
-            throw new Error(finalError.message ?? "লগইন ব্যর্থ হয়েছে।");
+          if (retryError) {
+            const errDetail =
+              retryError.message ||
+              signUpError.message ||
+              signInError.message ||
+              "লগইন ব্যর্থ হয়েছে।";
+            throw new Error(errDetail);
           }
         }
       }
