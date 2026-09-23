@@ -13,7 +13,7 @@ export function parseHHMM(value: string): number {
 }
 
 export function minutesBetween(startTime: string, endTime: string): number {
-  let start = parseHHMM(startTime);
+  const start = parseHHMM(startTime);
   let end = parseHHMM(endTime);
   if (end <= start) end += 24 * 60;
   return Math.max(1, end - start);

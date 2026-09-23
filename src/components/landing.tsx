@@ -46,7 +46,6 @@ export function LandingPage() {
   }, []);
 
   const google = GROK_PROVIDERS.find((p) => p.idp === "google");
-  const x = GROK_PROVIDERS.find((p) => p.idp === "twitter");
 
   return (
     <div ref={rootRef} className="mesh-bg relative min-h-dvh overflow-hidden">
@@ -99,25 +98,14 @@ export function LandingPage() {
                   <Link to="/app">Enter workspace</Link>
                 </Button>
               ) : (
-                <>
-                  {google ? (
-                    <Button
-                      size="lg"
-                      onClick={() => signIn(google.providerId, { callbackURL: "/app" })}
-                    >
-                      Continue with Google
-                    </Button>
-                  ) : null}
-                  {x ? (
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => signIn(x.providerId, { callbackURL: "/app" })}
-                    >
-                      Continue with X
-                    </Button>
-                  ) : null}
-                </>
+                google ? (
+                  <Button
+                    size="lg"
+                    onClick={() => signIn(google.providerId, { callbackURL: "/app" })}
+                  >
+                    Continue with Google
+                  </Button>
+                ) : null
               )}
             </div>
           </div>

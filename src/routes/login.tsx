@@ -8,7 +8,6 @@ export const Route = createFileRoute("/login")({ component: Login });
 
 function Login() {
   const google = GROK_PROVIDERS.find((p) => p.idp === "google");
-  const x = GROK_PROVIDERS.find((p) => p.idp === "twitter");
 
   return (
     <main className="mesh-bg relative grid min-h-dvh place-items-center overflow-hidden p-6">
@@ -21,21 +20,11 @@ function Login() {
         </p>
         <div className="mt-6 flex flex-col gap-2">
           {authEnabled ? (
-            <>
-              {google ? (
-                <Button onClick={() => signIn(google.providerId, { callbackURL: "/app" })}>
-                  Continue with Google
-                </Button>
-              ) : null}
-              {x ? (
-                <Button
-                  variant="outline"
-                  onClick={() => signIn(x.providerId, { callbackURL: "/app" })}
-                >
-                  Continue with X
-                </Button>
-              ) : null}
-            </>
+            google ? (
+              <Button onClick={() => signIn(google.providerId, { callbackURL: "/app" })}>
+                Continue with Google
+              </Button>
+            ) : null
           ) : (
             <p className="text-sm text-muted">Sign-in is disabled.</p>
           )}
